@@ -82,13 +82,13 @@ jobs:
         env:
           APT_SIGNING_KEY: ${{ secrets.APT_SIGNING_KEY }}
         run: |
-          if [ -n "$APT_SIGNING_KEY" ]; then
-            install -d -m 700 ~/.gnupg
-            printf '%s\n' "$APT_SIGNING_KEY" | gpg --batch --import
-            echo "SIGN_REPO=1" >> "$GITHUB_ENV"
-          else
-            echo "No APT_SIGNING_KEY secret configured; Release metadata will not be signed."
+          if [ -z "$APT_SIGNING_KEY" ]; then
+            echo "::error::APT_SIGNING_KEY secret is required to sign repository metadata."
+            exit 1
           fi
+          install -d -m 700 ~/.gnupg
+          printf '%s\n' "$APT_SIGNING_KEY" | gpg --batch --import
+          echo "SIGN_REPO=1" >> "$GITHUB_ENV"
 
       - name: Update repository metadata
         env:
@@ -97,13 +97,8 @@ jobs:
         run: scripts/update-apt-repo.sh
 
       - name: Commit package and repository metadata
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add pool repo
-          if git diff --cached --quiet; then
-            echo "No package or repository metadata changes to commit."
-          else
-            git commit -m "Add vpinball package ${{ inputs.vpinball_ref }}"
-            git push
-          fi
+        env:
+          COMMIT_MESSAGE: Add vpinball package ${{ inputs.vpinball_ref }}
+          SUITE: ${{ inputs.suite }}
+          COMPONENT: main
+        run: scripts/commit-repo-changes.sh

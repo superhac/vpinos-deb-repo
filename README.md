@@ -26,7 +26,7 @@ workflow:
 3. creates a `vpinball` Debian package,
 4. writes it to `pool/main/v/vpinball`,
 5. regenerates the APT metadata under `repo/dists/trixie`,
-6. signs the repository metadata when `APT_SIGNING_KEY` is configured, and
+6. signs the repository metadata with `APT_SIGNING_KEY`, and
 7. commits the package and metadata back to this repository.
 
 The workflow accepts a branch, tag, or commit SHA in `vpinball_ref`.
@@ -42,7 +42,7 @@ workflow:
 4. creates a `vpinfe` Debian package,
 5. writes it to `pool/main/v/vpinfe`,
 6. regenerates the APT metadata under `repo/dists/trixie`,
-7. signs the repository metadata when `APT_SIGNING_KEY` is configured, and
+7. signs the repository metadata with `APT_SIGNING_KEY`, and
 8. commits the package and metadata back to this repository.
 
 The default package uses the full `linux-x64` release asset. The workflow also

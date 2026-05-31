@@ -1,0 +1,163 @@
+name: Build Debian packages
+
+on:
+  workflow_dispatch:
+    inputs:
+      package_revision:
+        description: Debian package revision
+        required: true
+        default: "1"
+      release_tag:
+        description: GitHub Release tag to upload package assets to
+        required: true
+        default: vpinos-debs
+      vpinball_ref:
+        description: Branch, tag, or commit from vpinball/vpinball
+        required: true
+        default: master
+      vpinfe_version:
+        description: VPinFE release tag, or latest
+        required: true
+        default: latest
+      vpinfe_triplet:
+        description: VPinFE Linux release asset triplet
+        required: true
+        default: linux-x64
+        type: choice
+        options:
+          - linux-x64
+          - linux-arm64
+          - linux-x64-slim
+          - linux-arm64-slim
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-debian-packages-${{ inputs.release_tag }}
+  cancel-in-progress: false
+
+jobs:
+  vpinball:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install vpinball build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            autoconf \
+            automake \
+            bison \
+            build-essential \
+            cmake \
+            curl \
+            dpkg-dev \
+            file \
+            git \
+            libasound2-dev \
+            libdrm-dev \
+            libegl-dev \
+            libgbm-dev \
+            libgl1-mesa-dev \
+            libglu1-mesa-dev \
+            libpipewire-0.3-dev \
+            libtool \
+            libudev-dev \
+            libwayland-dev \
+            libwayland-egl-backend-dev \
+            libx11-dev \
+            libxcursor-dev \
+            libxi-dev \
+            libxkbcommon-dev \
+            libxrandr-dev \
+            libxss-dev \
+            libxtst-dev \
+            nasm \
+            pkg-config \
+            zlib1g-dev
+
+      - name: Build vpinball .deb
+        env:
+          VPINBALL_REPO_URL: https://github.com/vpinball/vpinball.git
+          VPINBALL_REF: ${{ inputs.vpinball_ref }}
+          PACKAGE_REVISION: ${{ inputs.package_revision }}
+          OUTDIR: ${{ github.workspace }}/dist/vpinball
+        run: scripts/build-vpinball-deb.sh
+
+      - name: Generate checksum
+        run: |
+          cd dist/vpinball
+          for deb in *.deb; do
+            sha256sum "$deb" > "$deb.sha256"
+          done
+
+      - name: Upload vpinball package to release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          if ! gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release create "$RELEASE_TAG" \
+              --title "VPINOS Debian packages" \
+              --notes "Debian package assets built by GitHub Actions." ||
+              gh release view "$RELEASE_TAG" >/dev/null
+          fi
+          gh release upload "$RELEASE_TAG" dist/vpinball/*.deb dist/vpinball/*.sha256 --clobber
+
+  vpinfe:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install vpinfe packaging tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            curl \
+            dpkg-dev \
+            jq \
+            unzip
+
+      - name: Build vpinfe .deb from release asset
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          VPINFE_REPO: superhac/vpinfe
+          VPINFE_VERSION: ${{ inputs.vpinfe_version }}
+          VPINFE_TRIPLET: ${{ inputs.vpinfe_triplet }}
+          PACKAGE_REVISION: ${{ inputs.package_revision }}
+          OUTDIR: ${{ github.workspace }}/dist/vpinfe
+        run: scripts/build-vpinfe-deb.sh
+
+      - name: Rename vpinfe package asset with triplet
+        env:
+          VPINFE_TRIPLET: ${{ inputs.vpinfe_triplet }}
+        run: |
+          deb="$(find dist/vpinfe -maxdepth 1 -type f -name '*.deb' | head -n 1)"
+          renamed="${deb%.deb}_${VPINFE_TRIPLET}.deb"
+          mv "$deb" "$renamed"
+
+      - name: Generate checksum
+        run: |
+          cd dist/vpinfe
+          for deb in *.deb; do
+            sha256sum "$deb" > "$deb.sha256"
+          done
+
+      - name: Upload vpinfe package to release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          if ! gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release create "$RELEASE_TAG" \
+              --title "VPINOS Debian packages" \
+              --notes "Debian package assets built by GitHub Actions." ||
+              gh release view "$RELEASE_TAG" >/dev/null
+          fi
+          gh release upload "$RELEASE_TAG" dist/vpinfe/*.deb dist/vpinfe/*.sha256 --clobber

@@ -1,103 +1,75 @@
 # vpinos-deb-repo
 
-This repository is laid out as a small APT repository for VPINOS packages.
-The first packages are `vpinball`, built from the upstream
-[`vpinball/vpinball`](https://github.com/vpinball/vpinball) repository, and
-`vpinfe`, repackaged from upstream
-[`superhac/vpinfe`](https://github.com/superhac/vpinfe) release assets.
+This repository builds Debian packages for VPINOS-related projects and publishes
+the `.deb` files as GitHub Release assets.
 
-## Repository layout
+The current packages are:
 
-```text
-pool/main/v/vpinball/                 Built vpinball .deb packages
-pool/main/v/vpinfe/                   Built vpinfe .deb packages
-repo/dists/trixie/main/binary-amd64/  APT Packages indexes
-repo/dists/trixie/Release             APT Release metadata
-repo/vpinos-archive-keyring.asc       Public signing key after generation
-```
+- `vpinball`, built from [`vpinball/vpinball`](https://github.com/vpinball/vpinball)
+- `vpinfe`, repackaged from [`superhac/vpinfe`](https://github.com/superhac/vpinfe)
+  release assets
 
-## Build vpinball
+GitHub rejects normal git files larger than 100 MB, while GitHub Release assets
+can be much larger. The workflow therefore uploads `.deb` files to a release
+instead of committing them to `pool/`.
 
-Run the `Build vpinball package` workflow from the GitHub Actions tab. The
-workflow:
+## Build Packages
+
+Run the `Build Debian packages` workflow from the GitHub Actions tab. Each run
+builds both `vpinball` and `vpinfe`.
+
+## vpinball
+
+The `vpinball` job:
 
 1. checks out `https://github.com/vpinball/vpinball.git`,
 2. builds the Linux x64 BGFX standalone player,
 3. creates a `vpinball` Debian package,
-4. writes it to `pool/main/v/vpinball`,
-5. regenerates the APT metadata under `repo/dists/trixie`,
-6. signs the repository metadata with `APT_SIGNING_KEY`, and
-7. commits the package and metadata back to this repository.
+4. writes it to `dist/`,
+5. generates a `.sha256` checksum sidecar, and
+6. uploads the `.deb` and checksum sidecar to the selected GitHub Release.
 
 The workflow accepts a branch, tag, or commit SHA in `vpinball_ref`.
 
-## Build vpinfe
+## vpinfe
 
-Run the `Build vpinfe package` workflow from the GitHub Actions tab. The
-workflow:
+The `vpinfe` job:
 
-1. reads the latest release from `https://github.com/superhac/vpinfe`,
+1. reads the selected release from `https://github.com/superhac/vpinfe`,
 2. downloads the selected Linux release zip and `checksums.txt`,
 3. verifies the zip SHA256,
 4. creates a `vpinfe` Debian package,
-5. writes it to `pool/main/v/vpinfe`,
-6. regenerates the APT metadata under `repo/dists/trixie`,
-7. signs the repository metadata with `APT_SIGNING_KEY`, and
-8. commits the package and metadata back to this repository.
+5. writes it to `dist/`,
+6. generates a `.sha256` checksum sidecar, and
+7. uploads the `.deb` and checksum sidecar to the selected GitHub Release.
 
-The default package uses the full `linux-x64` release asset. The workflow also
-supports `linux-x64-slim`, `linux-arm64`, and `linux-arm64-slim`.
+The default package uses the full `linux-x64` VPinFE release asset. Slim and
+ARM64 release assets are also available as workflow inputs.
 
-## Generate the repository signing key
+## Releases
 
-Create a repository signing key locally:
+The workflow uploads to the `vpinos-debs` GitHub Release by default. You can
+override the release tag when manually starting it.
 
-```bash
-scripts/generate-repo-key.sh
-```
-
-This writes:
-
-```text
-repo/vpinos-archive-keyring.asc
-.secrets/vpinos-archive-signing-key.asc
-```
-
-Commit the public key at `repo/vpinos-archive-keyring.asc`. Add the private key
-file contents to the GitHub repository secret named `APT_SIGNING_KEY`.
-
-The generated key is intentionally unencrypted so the GitHub workflow can sign
-non-interactively. Keep `.secrets/vpinos-archive-signing-key.asc` private.
-
-## Update metadata locally
-
-After adding or removing packages in `pool`, regenerate the APT metadata with:
+The uploaded checksum sidecars can be used to verify downloads:
 
 ```bash
-sudo apt-get install apt-utils dpkg-dev gnupg
-scripts/update-apt-repo.sh
+sha256sum -c vpinball_*.deb.sha256
+sha256sum -c vpinfe_*.deb.sha256
 ```
 
-To sign with a local key:
+## Local Builds
+
+Build VPinball locally:
 
 ```bash
-GPG_KEY_ID=<fingerprint-or-key-id> scripts/update-apt-repo.sh
+sudo apt-get install build-essential cmake git dpkg-dev
+OUTDIR="$PWD/dist" scripts/build-vpinball-deb.sh
 ```
 
-## Client usage
-
-After the repository is published, clients can install the public key and add an
-APT source that points at the `repo` directory as served by GitHub Pages or your
-web server.
-
-For example, if this repository is served at
-`https://superhac.github.io/vpinos-deb-repo/repo`:
+Build VPinFE locally:
 
 ```bash
-curl -fsSL https://superhac.github.io/vpinos-deb-repo/repo/vpinos-archive-keyring.asc |
-  sudo tee /etc/apt/keyrings/vpinos-archive-keyring.asc >/dev/null
-echo "deb [signed-by=/etc/apt/keyrings/vpinos-archive-keyring.asc] https://superhac.github.io/vpinos-deb-repo/repo trixie main" |
-  sudo tee /etc/apt/sources.list.d/vpinos.list
-sudo apt update
-sudo apt install vpinball
+sudo apt-get install curl dpkg-dev jq unzip
+OUTDIR="$PWD/dist" scripts/build-vpinfe-deb.sh
 ```

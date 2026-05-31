@@ -5,7 +5,7 @@ repo_url="${VPINBALL_REPO_URL:-https://github.com/vpinball/vpinball.git}"
 ref="${VPINBALL_REF:-master}"
 revision="${PACKAGE_REVISION:-1}"
 workdir="${WORKDIR:-$PWD/.build/vpinball}"
-outdir="${OUTDIR:-$PWD/pool/main/v/vpinball}"
+outdir="${OUTDIR:-$PWD/dist}"
 arch="${DEB_ARCH:-$(dpkg --print-architecture)}"
 
 rm -rf "$workdir"

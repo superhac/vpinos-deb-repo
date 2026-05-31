@@ -6,7 +6,7 @@ version="${VPINFE_VERSION:-latest}"
 triplet="${VPINFE_TRIPLET:-linux-x64}"
 revision="${PACKAGE_REVISION:-1}"
 workdir="${WORKDIR:-$PWD/.build/vpinfe}"
-outdir="${OUTDIR:-$PWD/pool/main/v/vpinfe}"
+outdir="${OUTDIR:-$PWD/dist}"
 
 case "$triplet" in
   linux-x64|linux-x64-slim)

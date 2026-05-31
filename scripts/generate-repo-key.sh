@@ -2,7 +2,7 @@
 set -euo pipefail
 
 name="${GPG_NAME:-VPINOS Debian Repository}"
-email="${GPG_EMAIL:-repo@vpinos.local}"
+email="${GPG_EMAIL:-superhac007@gmail.com}"
 home="${GNUPGHOME:-$PWD/.gnupg-vpinos}"
 public_key_path="${PUBLIC_KEY_PATH:-repo/vpinos-archive-keyring.asc}"
 private_key_path="${PRIVATE_KEY_PATH:-.secrets/vpinos-archive-signing-key.asc}"

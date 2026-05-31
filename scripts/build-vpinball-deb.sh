@@ -65,7 +65,7 @@ cat > "$pkgroot/DEBIAN/control" <<CONTROL
 Package: vpinball
 Version: ${package_version}
 Architecture: ${arch}
-Maintainer: VPINOS <repo@vpinos.local>
+Maintainer: Superhac <superhac007@gmail.com>
 Installed-Size: ${installed_size}
 Depends: libc6, libstdc++6, zlib1g, libdrm2, libgbm1, libglu1-mesa | libglu1, libegl1, libgl1, libwayland-client0, libwayland-egl1, libudev1, libx11-6, libxcursor1, libxi6, libxss1, libxtst6, libxkbcommon0, libxrandr2, libasound2, libpipewire-0.3-0
 Section: games

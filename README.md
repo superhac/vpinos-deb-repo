@@ -1,14 +1,16 @@
 # vpinos-deb-repo
 
 This repository is laid out as a small APT repository for VPINOS packages.
-The first package is `vpinball`, built from the upstream
-[`vpinball/vpinball`](https://github.com/vpinball/vpinball) repository by
-GitHub Actions and published into `pool/main/v/vpinball`.
+The first packages are `vpinball`, built from the upstream
+[`vpinball/vpinball`](https://github.com/vpinball/vpinball) repository, and
+`vpinfe`, repackaged from upstream
+[`superhac/vpinfe`](https://github.com/superhac/vpinfe) release assets.
 
 ## Repository layout
 
 ```text
-pool/main/v/vpinball/                 Built .deb packages
+pool/main/v/vpinball/                 Built vpinball .deb packages
+pool/main/v/vpinfe/                   Built vpinfe .deb packages
 repo/dists/trixie/main/binary-amd64/  APT Packages indexes
 repo/dists/trixie/Release             APT Release metadata
 repo/vpinos-archive-keyring.asc       Public signing key after generation
@@ -28,6 +30,23 @@ workflow:
 7. commits the package and metadata back to this repository.
 
 The workflow accepts a branch, tag, or commit SHA in `vpinball_ref`.
+
+## Build vpinfe
+
+Run the `Build vpinfe package` workflow from the GitHub Actions tab. The
+workflow:
+
+1. reads the latest release from `https://github.com/superhac/vpinfe`,
+2. downloads the selected Linux release zip and `checksums.txt`,
+3. verifies the zip SHA256,
+4. creates a `vpinfe` Debian package,
+5. writes it to `pool/main/v/vpinfe`,
+6. regenerates the APT metadata under `repo/dists/trixie`,
+7. signs the repository metadata when `APT_SIGNING_KEY` is configured, and
+8. commits the package and metadata back to this repository.
+
+The default package uses the full `linux-x64` release asset. The workflow also
+supports `linux-x64-slim`, `linux-arm64`, and `linux-arm64-slim`.
 
 ## Generate the repository signing key
 

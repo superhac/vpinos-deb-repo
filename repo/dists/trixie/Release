@@ -1,24 +1,24 @@
 Architectures: amd64
 Codename: trixie
 Components: main
-Date: Sun, 31 May 2026 11:10:57 +0000
+Date: Sun, 31 May 2026 11:29:03 +0000
 Description: VPINOS Debian package repository
 Label: VPINOS Debian Repository
 Origin: VPINOS
 Suite: trixie
 MD5Sum:
- e194d526d3ff17f3bc0c540e8fbc12d3              200 Release
+ 5299e8b0d2b2a43367e2d0c06ff6388c              200 Release
  d41d8cd98f00b204e9800998ecf8427e                0 main/binary-amd64/Packages
- 03193aba0da6a8d3320173626feaefc6               29 main/binary-amd64/Packages.gz
+ b62706820e0da22d1e889090a88a8a4f               29 main/binary-amd64/Packages.gz
 SHA1:
- 68a85cbd8dc568006ee06210bd348c23228f8296              200 Release
+ 823ded1b98549a4f7347a1ffa15d2f3a622eaecf              200 Release
  da39a3ee5e6b4b0d3255bfef95601890afd80709                0 main/binary-amd64/Packages
- 6cebc7d0faf26c76003f567bb4ca498f8f56b760               29 main/binary-amd64/Packages.gz
+ 673f97c80144baf1022e2a3a55a5e88d73bd7e01               29 main/binary-amd64/Packages.gz
 SHA256:
- b4823173788963d664c60b290992c0881e9601f15960634d21e4e4511f512462              200 Release
+ 47390ffea80fd39a129199c85f129d042afd884f0cd3f374681e7fb40a6f454f              200 Release
  e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855                0 main/binary-amd64/Packages
- 913a3e30bde243e91c69f6b54e56b05f3c05bc8cea90b0e3ff9f58a8963b5465               29 main/binary-amd64/Packages.gz
+ edd78a54f47b5d30a8f5bf83c232f239c602624e2bbd6f4eed8a99acf80eef8b               29 main/binary-amd64/Packages.gz
 SHA512:
- aa4421dde33ab323b010b26aa9bccc1e5d867abb1711ebdb8c30c454d492e4db28756fc285a0c5a39c5d903952f01af91cc9d6698cc7c5584f1faa83cac7df30              200 Release
+ df11a6cf531fa2cdd1de6574cf18833427e7aaabbbbe65b5d6cc2e7b8579c3afe54919bb63d08b0968ae0d2647bf707a7a3d33971cb189b77317adc526b639a2              200 Release
  cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e                0 main/binary-amd64/Packages
- a60b2a54eea3e383141829b8aebc0289cd726ae162ab0ca3535d6c804dad1e92c108960950a6329ca0dd486c6bd7f9735914a3d4c375ee419b595a8ca9d23803               29 main/binary-amd64/Packages.gz
+ 545954b8de841e90528bbce673e2a04c6bc0d06d9b92e7d82ec431bab60ebffd5ac6bcbf72cee1f5e1d5e373d5e81362b0a37bd465280a839e60211c5bc90f12               29 main/binary-amd64/Packages.gz

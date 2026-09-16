@@ -27,7 +27,6 @@ upstream_version="$(printf '%s' "$upstream_version" | tr '_' '.' | sed -E 's/[^A
 package_version="${upstream_version}-${revision}"
 
 platforms/linux-x64/external.sh
-cp make/CMakeLists_bgfx-linux-x64.txt CMakeLists.txt
 cmake -DCMAKE_BUILD_TYPE=Release -B build
 cmake --build build --parallel "$(nproc)"
 

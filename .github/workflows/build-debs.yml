@@ -22,7 +22,7 @@ on:
       vpinfe_triplet:
         description: VPinFE Linux release asset triplet
         required: true
-        default: linux-x64
+        default: linux-x64-slim
         type: choice
         options:
           - linux-x64

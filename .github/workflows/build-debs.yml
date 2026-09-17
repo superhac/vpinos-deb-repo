@@ -8,7 +8,7 @@ on:
         required: true
         default: "1"
       release_tag:
-        description: GitHub Release tag to upload package assets to
+        description: Base name for the new GitHub Release created by this run
         required: true
         default: vpinos-debs
       vpinball_ref:
@@ -34,11 +34,39 @@ permissions:
   contents: write
 
 concurrency:
-  group: build-debian-packages-${{ inputs.release_tag }}
+  group: build-debian-packages
   cancel-in-progress: false
 
 jobs:
+  create-release:
+    runs-on: ubuntu-24.04
+    outputs:
+      release_tag: ${{ steps.tag.outputs.release_tag }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Compute unique release tag
+        id: tag
+        run: echo "release_tag=${{ inputs.release_tag }}-${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.tag.outputs.release_tag }}
+        run: |
+          gh release create "$RELEASE_TAG" \
+            --title "VPINOS Debian packages ($RELEASE_TAG)" \
+            --notes "Debian package assets built by GitHub Actions.
+
+          - vpinball_ref: ${{ inputs.vpinball_ref }}
+          - vpinfe_version: ${{ inputs.vpinfe_version }}
+          - vpinfe_triplet: ${{ inputs.vpinfe_triplet }}
+          - package_revision: ${{ inputs.package_revision }}"
+
   vpinball:
+    needs: create-release
     runs-on: ubuntu-24.04
 
     steps:
@@ -98,17 +126,11 @@ jobs:
       - name: Upload vpinball package to release
         env:
           GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: ${{ inputs.release_tag }}
-        run: |
-          if ! gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
-            gh release create "$RELEASE_TAG" \
-              --title "VPINOS Debian packages" \
-              --notes "Debian package assets built by GitHub Actions." ||
-              gh release view "$RELEASE_TAG" >/dev/null
-          fi
-          gh release upload "$RELEASE_TAG" dist/vpinball/*.deb dist/vpinball/*.sha256 --clobber
+          RELEASE_TAG: ${{ needs.create-release.outputs.release_tag }}
+        run: gh release upload "$RELEASE_TAG" dist/vpinball/*.deb dist/vpinball/*.sha256 --clobber
 
   vpinfe:
+    needs: create-release
     runs-on: ubuntu-24.04
 
     steps:
@@ -152,12 +174,5 @@ jobs:
       - name: Upload vpinfe package to release
         env:
           GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: ${{ inputs.release_tag }}
-        run: |
-          if ! gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
-            gh release create "$RELEASE_TAG" \
-              --title "VPINOS Debian packages" \
-              --notes "Debian package assets built by GitHub Actions." ||
-              gh release view "$RELEASE_TAG" >/dev/null
-          fi
-          gh release upload "$RELEASE_TAG" dist/vpinfe/*.deb dist/vpinfe/*.sha256 --clobber
+          RELEASE_TAG: ${{ needs.create-release.outputs.release_tag }}
+        run: gh release upload "$RELEASE_TAG" dist/vpinfe/*.deb dist/vpinfe/*.sha256 --clobber

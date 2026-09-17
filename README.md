@@ -48,8 +48,10 @@ ARM64 release assets are also available as workflow inputs.
 
 ## Releases
 
-The workflow uploads to the `vpinos-debs` GitHub Release by default. You can
-override the release tag when manually starting it.
+Each workflow run creates a brand-new GitHub Release, tagged
+`<release_tag>-<run number>` (e.g. `vpinos-debs-42`), instead of reusing or
+adding to a previous release. Override `release_tag` to change the base
+name used for that run's release.
 
 The uploaded checksum sidecars can be used to verify downloads:
 

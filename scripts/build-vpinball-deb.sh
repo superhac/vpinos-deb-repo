@@ -33,12 +33,27 @@ cmake --build build --parallel "$(nproc)"
 pkgroot="$workdir/pkgroot"
 rm -rf "$pkgroot"
 install -d "$pkgroot/DEBIAN" "$pkgroot/opt/vpinball" "$pkgroot/usr/bin" "$pkgroot/usr/share/applications"
-install -m 0755 build/VPinballX_BGFX "$pkgroot/opt/vpinball/VPinballX_BGFX"
 
-if [[ -d build/assets ]]; then
-  cp -a build/assets "$pkgroot/opt/vpinball/assets"
-elif [[ -d src/assets ]]; then
-  cp -a src/assets "$pkgroot/opt/vpinball/assets"
+# vpinball's Linux build vendors and self-builds all of its third-party libs
+# (SDL3, BGFX, FreeImage, PinMAME, DMDUtil, ffmpeg, ...) as shared objects and
+# copies them, plus assets/scripts/docs and every plugin, flat into the build
+# directory next to the executable (CMAKE_INSTALL_RPATH=$ORIGIN, so the binary
+# only looks for libs beside itself). The whole build/ tree is the app, so the
+# whole thing needs to ship in the package, not just the binary + assets.
+(cd build && tar \
+  --exclude='CMakeFiles' \
+  --exclude='CMakeCache.txt' \
+  --exclude='cmake_install.cmake' \
+  --exclude='Makefile' \
+  --exclude='*.cmake' \
+  --exclude='compile_commands.json' \
+  --exclude='Testing' \
+  --exclude='*.ninja*' \
+  -cf - .) | tar -xf - -C "$pkgroot/opt/vpinball"
+
+if [[ ! -x "$pkgroot/opt/vpinball/VPinballX_BGFX" ]]; then
+  echo "VPinballX_BGFX not found in build output." >&2
+  exit 1
 fi
 
 cat > "$pkgroot/usr/bin/vpinball" <<'LAUNCHER'

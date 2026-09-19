@@ -16,14 +16,12 @@ cd "$workdir/src"
 git checkout "$ref"
 git submodule update --init --recursive
 
-short_sha="$(git rev-parse --short=12 HEAD)"
-tag="$(git describe --tags --exact-match 2>/dev/null || true)"
-if [[ "$tag" =~ ^v?[0-9] ]]; then
-  upstream_version="${tag#v}"
-else
-  upstream_version="0.0~git$(date -u +%Y%m%d).${short_sha}"
-fi
-upstream_version="$(printf '%s' "$upstream_version" | tr '_' '.' | sed -E 's/[^A-Za-z0-9.+:~]/./g')"
+# Version is <base>.<UTC commit date+time>, e.g. 10.9.202609191430, so versions
+# increase monotonically with upstream master. Bump PACKAGE_REVISION only to
+# repackage the same commit.
+base_version="${VPINBALL_BASE_VERSION:-10.9}"
+commit_stamp="$(TZ=UTC git show -s --format=%cd --date=format-local:%Y%m%d%H%M HEAD)"
+upstream_version="${base_version}.${commit_stamp}"
 package_version="${upstream_version}-${revision}"
 
 platforms/linux-x64/external.sh

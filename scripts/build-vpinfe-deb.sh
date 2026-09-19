@@ -3,20 +3,20 @@ set -euo pipefail
 
 repo="${VPINFE_REPO:-superhac/vpinfe}"
 version="${VPINFE_VERSION:-latest}"
-triplet="${VPINFE_TRIPLET:-linux-x64}"
+triplet="${VPINFE_TRIPLET:-linux-x64-slim}"
 revision="${PACKAGE_REVISION:-1}"
 workdir="${WORKDIR:-$PWD/.build/vpinfe}"
 outdir="${OUTDIR:-$PWD/dist}"
 
 case "$triplet" in
-  linux-x64|linux-x64-slim)
+  linux-x64-slim)
     arch="amd64"
     ;;
-  linux-arm64|linux-arm64-slim)
+  linux-arm64-slim)
     arch="arm64"
     ;;
   *)
-    echo "Unsupported VPinFE triplet for Debian packaging: $triplet" >&2
+    echo "Unsupported VPinFE triplet for Debian packaging: $triplet (only slim builds are supported)" >&2
     exit 1
     ;;
 esac

@@ -20,13 +20,11 @@ on:
         required: true
         default: latest
       vpinfe_triplet:
-        description: VPinFE Linux release asset triplet
+        description: VPinFE slim Linux release asset triplet
         required: true
         default: linux-x64-slim
         type: choice
         options:
-          - linux-x64
-          - linux-arm64
           - linux-x64-slim
           - linux-arm64-slim
 
@@ -155,14 +153,6 @@ jobs:
           PACKAGE_REVISION: ${{ inputs.package_revision }}
           OUTDIR: ${{ github.workspace }}/dist/vpinfe
         run: scripts/build-vpinfe-deb.sh
-
-      - name: Rename vpinfe package asset with triplet
-        env:
-          VPINFE_TRIPLET: ${{ inputs.vpinfe_triplet }}
-        run: |
-          deb="$(find dist/vpinfe -maxdepth 1 -type f -name '*.deb' | head -n 1)"
-          renamed="${deb%.deb}_${VPINFE_TRIPLET}.deb"
-          mv "$deb" "$renamed"
 
       - name: Generate checksum
         run: |

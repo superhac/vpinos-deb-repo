@@ -31,20 +31,26 @@ The `vpinball` job:
 
 The workflow accepts a branch, tag, or commit SHA in `vpinball_ref`.
 
+The package version is `<base>.<UTC commit date and time>-<revision>`, e.g.
+`10.9.202609191430-1`. The base defaults to `10.9` and can be changed with
+`VPINBALL_BASE_VERSION`. The timestamp is `YYYYMMDDHHMM` from the built commit,
+so versions increase with upstream commits. Bump `package_revision` only to
+repackage the same commit.
+
 ## vpinfe
 
 The `vpinfe` job:
 
 1. reads the selected release from `https://github.com/superhac/vpinfe`,
-2. downloads the selected Linux release zip and `checksums.txt`,
+2. downloads the selected slim Linux release zip and `checksums.txt`,
 3. verifies the zip SHA256,
 4. creates a `vpinfe` Debian package,
 5. writes it to `dist/`,
 6. generates a `.sha256` checksum sidecar, and
 7. uploads the `.deb` and checksum sidecar to the selected GitHub Release.
 
-The default package uses the full `linux-x64` VPinFE release asset. Slim and
-ARM64 release assets are also available as workflow inputs.
+Only the slim VPinFE release assets are packaged. The default is
+`linux-x64-slim`; `linux-arm64-slim` is available as a workflow input.
 
 ## Releases
 

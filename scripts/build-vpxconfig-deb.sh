@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-repo="${VPINCONFIG_REPO:-superhac/vpxconfig}"
-version="${VPINCONFIG_VERSION:-latest}"
+repo="${VPXCONFIG_REPO:-superhac/vpxconfig}"
+version="${VPXCONFIG_VERSION:-latest}"
 revision="${PACKAGE_REVISION:-1}"
-workdir="${WORKDIR:-$PWD/.build/vpinconfig}"
+workdir="${WORKDIR:-$PWD/.build/vpxconfig}"
 outdir="${OUTDIR:-$PWD/dist}"
 arch="amd64"
-asset_name="vpinconfig"
+asset_name="vpxconfig"
 
 command -v curl >/dev/null || { echo "curl is required." >&2; exit 1; }
 command -v jq >/dev/null || { echo "jq is required." >&2; exit 1; }
@@ -51,11 +51,11 @@ package_version="${upstream_version}-${revision}"
 pkgroot="$workdir/pkgroot"
 rm -rf "$pkgroot"
 install -d "$pkgroot/DEBIAN" "$pkgroot/usr/bin"
-install -m 0755 "$workdir/$asset_name" "$pkgroot/usr/bin/vpinconfig"
+install -m 0755 "$workdir/$asset_name" "$pkgroot/usr/bin/vpxconfig"
 
 installed_size="$(du -sk "$pkgroot" | awk '{print $1}')"
 cat > "$pkgroot/DEBIAN/control" <<CONTROL
-Package: vpinconfig
+Package: vpxconfig
 Version: ${package_version}
 Architecture: ${arch}
 Maintainer: Superhac <superhac007@gmail.com>
@@ -64,12 +64,12 @@ Depends: libc6, zlib1g
 Section: utils
 Priority: optional
 Homepage: https://github.com/superhac/vpxconfig
-Description: VPinConfig configuration tool for Visual Pinball
- VPinConfig is a configuration tool for Visual Pinball setups. It listens
+Description: VPXConfig configuration tool for Visual Pinball
+ VPXConfig is a configuration tool for Visual Pinball setups. It listens
  on 127.0.0.1:1111 by default (see --host and --port).
  This package installs the upstream single-file release executable.
 CONTROL
 
-deb_path="$outdir/vpinconfig_${package_version}_${arch}.deb"
+deb_path="$outdir/vpxconfig_${package_version}_${arch}.deb"
 dpkg-deb --build --root-owner-group "$pkgroot" "$deb_path"
 echo "$deb_path"

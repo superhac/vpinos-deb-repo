@@ -8,7 +8,7 @@ The current packages are:
 - `vpinball`, built from [`vpinball/vpinball`](https://github.com/vpinball/vpinball)
 - `vpinfe`, repackaged from [`superhac/vpinfe`](https://github.com/superhac/vpinfe)
   release assets
-- `vpinconfig`, repackaged from [`superhac/vpxconfig`](https://github.com/superhac/vpxconfig)
+- `vpxconfig`, repackaged from [`superhac/vpxconfig`](https://github.com/superhac/vpxconfig)
   release assets (amd64 only)
 
 GitHub rejects normal git files larger than 100 MB, while GitHub Release assets
@@ -25,7 +25,7 @@ instructions.
 ## Build Packages
 
 Run the `Build Debian packages` workflow from the GitHub Actions tab. Each run
-builds `vpinball`, `vpinfe` and `vpinconfig`.
+builds `vpinball`, `vpinfe` and `vpxconfig`.
 
 ## vpinball
 
@@ -61,16 +61,16 @@ The `vpinfe` job:
 Only the slim VPinFE release assets are packaged. The default is
 `linux-x64-slim`; `linux-arm64-slim` is available as a workflow input.
 
-## vpinconfig
+## vpxconfig
 
-The `vpinconfig` job:
+The `vpxconfig` job:
 
 1. reads the selected release from `https://github.com/superhac/vpxconfig`
-   (`vpinconfig_version`, default `latest`),
-2. downloads the single-file `vpinconfig` executable and its `.sha256`,
+   (`vpxconfig_version`, default `latest`),
+2. downloads the single-file `vpxconfig` release asset and its `.sha256`,
 3. verifies the checksum,
-4. creates an amd64 `vpinconfig` Debian package that installs the executable
-   to `/usr/bin/vpinconfig`,
+4. creates an amd64 `vpxconfig` Debian package that installs the executable
+   to `/usr/bin/vpxconfig`,
 5. writes it to `dist/`,
 6. generates a `.sha256` checksum sidecar, and
 7. uploads the `.deb` and checksum sidecar to the selected GitHub Release.
@@ -89,7 +89,7 @@ The uploaded checksum sidecars can be used to verify downloads:
 ```bash
 sha256sum -c vpinball_*.deb.sha256
 sha256sum -c vpinfe_*.deb.sha256
-sha256sum -c vpinconfig_*.deb.sha256
+sha256sum -c vpxconfig_*.deb.sha256
 ```
 
 ## Local Builds
@@ -108,9 +108,9 @@ sudo apt-get install curl dpkg-dev jq unzip
 OUTDIR="$PWD/dist" scripts/build-vpinfe-deb.sh
 ```
 
-Build VPinConfig locally:
+Build VPXConfig locally:
 
 ```bash
 sudo apt-get install curl dpkg-dev jq
-OUTDIR="$PWD/dist" scripts/build-vpinconfig-deb.sh
+OUTDIR="$PWD/dist" scripts/build-vpxconfig-deb.sh
 ```

@@ -23,14 +23,6 @@ on:
         description: VPXConfig (superhac/vpxconfig) release tag, or latest
         required: true
         default: latest
-      vpinfe_triplet:
-        description: VPinFE slim Linux release asset triplet
-        required: true
-        default: linux-x64-slim
-        type: choice
-        options:
-          - linux-x64-slim
-          - linux-arm64-slim
 
 permissions:
   contents: write
@@ -64,15 +56,33 @@ jobs:
 
           - vpinball_ref: ${{ inputs.vpinball_ref }}
           - vpinfe_version: ${{ inputs.vpinfe_version }}
-          - vpinfe_triplet: ${{ inputs.vpinfe_triplet }}
+          - architectures: amd64, arm64
           - vpxconfig_version: ${{ inputs.vpxconfig_version }}
           - package_revision: ${{ inputs.package_revision }}"
 
   vpinball:
     needs: create-release
-    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+            container: ""
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+            # Built on the runner itself, VPX links Ubuntu's libgpiod, which VPinOS does not have.
+            container: debian:trixie
+    runs-on: ${{ matrix.runner }}
+    container: ${{ matrix.container }}
 
     steps:
+      - name: Prepare the container
+        if: matrix.container != ''
+        run: |
+          apt-get update
+          apt-get install -y ca-certificates gh git sudo
+
       - name: Check out repository
         uses: actions/checkout@v4
 
@@ -95,6 +105,7 @@ jobs:
             libgbm-dev \
             libgl1-mesa-dev \
             libglu1-mesa-dev \
+            libgpiod-dev \
             libpipewire-0.3-dev \
             libtool \
             libudev-dev \
@@ -134,6 +145,10 @@ jobs:
 
   vpinfe:
     needs: create-release
+    strategy:
+      fail-fast: false
+      matrix:
+        triplet: [linux-x64-slim, linux-arm64-slim]
     runs-on: ubuntu-24.04
 
     steps:
@@ -154,7 +169,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           VPINFE_REPO: superhac/vpinfe
           VPINFE_VERSION: ${{ inputs.vpinfe_version }}
-          VPINFE_TRIPLET: ${{ inputs.vpinfe_triplet }}
+          VPINFE_TRIPLET: ${{ matrix.triplet }}
           PACKAGE_REVISION: ${{ inputs.package_revision }}
           OUTDIR: ${{ github.workspace }}/dist/vpinfe
         run: scripts/build-vpinfe-deb.sh
@@ -174,6 +189,10 @@ jobs:
 
   vpxconfig:
     needs: create-release
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [amd64, arm64]
     runs-on: ubuntu-24.04
 
     steps:
@@ -193,6 +212,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           VPXCONFIG_REPO: superhac/vpxconfig
           VPXCONFIG_VERSION: ${{ inputs.vpxconfig_version }}
+          DEB_ARCH: ${{ matrix.arch }}
           PACKAGE_REVISION: ${{ inputs.package_revision }}
           OUTDIR: ${{ github.workspace }}/dist/vpxconfig
         run: scripts/build-vpxconfig-deb.sh

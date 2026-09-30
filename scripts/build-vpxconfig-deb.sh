@@ -6,8 +6,12 @@ version="${VPXCONFIG_VERSION:-latest}"
 revision="${PACKAGE_REVISION:-1}"
 workdir="${WORKDIR:-$PWD/.build/vpxconfig}"
 outdir="${OUTDIR:-$PWD/dist}"
-arch="amd64"
-asset_name="vpxconfig"
+arch="${DEB_ARCH:-$(dpkg --print-architecture)}"
+case "$arch" in
+  amd64) asset_name="vpxconfig-linux-x86_64.tar.gz" ;;
+  arm64) asset_name="vpxconfig-linux-arm64.tar.gz" ;;
+  *) echo "No vpxconfig release asset for architecture $arch." >&2; exit 1 ;;
+esac
 
 command -v curl >/dev/null || { echo "curl is required." >&2; exit 1; }
 command -v jq >/dev/null || { echo "jq is required." >&2; exit 1; }
@@ -43,6 +47,7 @@ fi
 curl "${curl_args[@]}" -o "$workdir/$asset_name" "$bin_url"
 curl "${curl_args[@]}" -o "$workdir/$asset_name.sha256" "$sum_url"
 (cd "$workdir" && sha256sum --check "$asset_name.sha256")
+tar -xzf "$workdir/$asset_name" -C "$workdir" vpxconfig
 
 upstream_version="${version#v}"
 upstream_version="$(printf '%s' "$upstream_version" | tr '_' '.' | sed -E 's/[^A-Za-z0-9.+:~]/./g')"
@@ -51,7 +56,7 @@ package_version="${upstream_version}-${revision}"
 pkgroot="$workdir/pkgroot"
 rm -rf "$pkgroot"
 install -d "$pkgroot/DEBIAN" "$pkgroot/usr/bin"
-install -m 0755 "$workdir/$asset_name" "$pkgroot/usr/bin/vpxconfig"
+install -m 0755 "$workdir/vpxconfig" "$pkgroot/usr/bin/vpxconfig"
 
 installed_size="$(du -sk "$pkgroot" | awk '{print $1}')"
 cat > "$pkgroot/DEBIAN/control" <<CONTROL

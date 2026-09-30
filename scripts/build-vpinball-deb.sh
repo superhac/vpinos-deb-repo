@@ -24,7 +24,14 @@ commit_stamp="$(TZ=UTC git show -s --format=%cd --date=format-local:%Y%m%d%H%M H
 upstream_version="${base_version}.${commit_stamp}"
 package_version="${upstream_version}-${revision}"
 
-platforms/linux-x64/external.sh
+depends="libc6, libstdc++6, zlib1g, libdrm2, libgbm1, libglu1-mesa | libglu1, libegl1, libgl1, libwayland-client0, libwayland-egl1, libudev1, libx11-6, libxcursor1, libxi6, libxss1, libxtst6, libxkbcommon0, libxrandr2, libasound2, libpipewire-0.3-0"
+case "$arch" in
+  amd64) platform="linux-x64" ;;
+  # ZeDMD support links libgpiod on aarch64 only.
+  arm64) platform="linux-aarch64"; depends="$depends, libgpiod3" ;;
+  *) echo "No vpinball platform for architecture $arch." >&2; exit 1 ;;
+esac
+"platforms/$platform/external.sh"
 cmake -DCMAKE_BUILD_TYPE=Release -B build
 cmake --build build --parallel "$(nproc)"
 
@@ -79,7 +86,7 @@ Version: ${package_version}
 Architecture: ${arch}
 Maintainer: Superhac <superhac007@gmail.com>
 Installed-Size: ${installed_size}
-Depends: libc6, libstdc++6, zlib1g, libdrm2, libgbm1, libglu1-mesa | libglu1, libegl1, libgl1, libwayland-client0, libwayland-egl1, libudev1, libx11-6, libxcursor1, libxi6, libxss1, libxtst6, libxkbcommon0, libxrandr2, libasound2, libpipewire-0.3-0
+Depends: ${depends}
 Section: games
 Priority: optional
 Homepage: https://github.com/vpinball/vpinball

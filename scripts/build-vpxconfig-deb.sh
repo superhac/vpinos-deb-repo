@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-repo="${VPXCONFIG_REPO:-superhac/vpxconfig}"
+repo="${VPXCONFIG_REPO:-vpinos/vpxconfig}"
 version="${VPXCONFIG_VERSION:-latest}"
 revision="${PACKAGE_REVISION:-1}"
 workdir="${WORKDIR:-$PWD/.build/vpxconfig}"
@@ -68,7 +68,7 @@ Installed-Size: ${installed_size}
 Depends: libc6, zlib1g
 Section: utils
 Priority: optional
-Homepage: https://github.com/superhac/vpxconfig
+Homepage: https://github.com/vpinos/vpxconfig
 Description: VPXConfig configuration tool for Visual Pinball
  VPXConfig is a configuration tool for Visual Pinball setups. It listens
  on 127.0.0.1:1111 by default (see --host and --port).

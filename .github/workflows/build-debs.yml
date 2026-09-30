@@ -20,7 +20,7 @@ on:
         required: true
         default: latest
       vpxconfig_version:
-        description: VPXConfig (superhac/vpxconfig) release tag, or latest
+        description: VPXConfig (vpinos/vpxconfig) release tag, or latest
         required: true
         default: latest
 
@@ -170,7 +170,7 @@ jobs:
       - name: Build vpxconfig .deb from release asset
         env:
           GITHUB_TOKEN: ${{ github.token }}
-          VPXCONFIG_REPO: superhac/vpxconfig
+          VPXCONFIG_REPO: vpinos/vpxconfig
           VPXCONFIG_VERSION: ${{ inputs.vpxconfig_version }}
           DEB_ARCH: ${{ matrix.arch }}
           PACKAGE_REVISION: ${{ inputs.package_revision }}

@@ -9,7 +9,7 @@ The current packages are:
   release assets
 - `vpinfe`, repackaged from [`superhac/vpinfe`](https://github.com/superhac/vpinfe)
   release assets
-- `vpxconfig`, repackaged from [`superhac/vpxconfig`](https://github.com/superhac/vpxconfig)
+- `vpxconfig`, repackaged from [`vpinos/vpxconfig`](https://github.com/vpinos/vpxconfig)
   release assets
 
 GitHub rejects normal git files larger than 100 MB, while GitHub Release assets
@@ -65,7 +65,7 @@ Only the slim VPinFE release assets are packaged. The default is
 
 The `vpxconfig` job:
 
-1. reads the selected release from `https://github.com/superhac/vpxconfig`
+1. reads the selected release from `https://github.com/vpinos/vpxconfig`
    (`vpxconfig_version`, default `latest`),
 2. downloads the single-file `vpxconfig` release asset and its `.sha256`,
 3. verifies the checksum,

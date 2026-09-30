@@ -50,7 +50,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ steps.tag.outputs.release_tag }}
         run: |
-          gh release create "$RELEASE_TAG" \
+          gh release create "$RELEASE_TAG" -R "$GITHUB_REPOSITORY" \
             --title "VPINOS Debian packages ($RELEASE_TAG)" \
             --notes "Debian package assets built by GitHub Actions.
 
@@ -82,6 +82,7 @@ jobs:
         run: |
           apt-get update
           apt-get install -y ca-certificates gh git sudo
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
       - name: Check out repository
         uses: actions/checkout@v4
@@ -141,7 +142,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ needs.create-release.outputs.release_tag }}
-        run: gh release upload "$RELEASE_TAG" dist/vpinball/*.deb dist/vpinball/*.sha256 --clobber
+        run: gh release upload "$RELEASE_TAG" -R "$GITHUB_REPOSITORY" dist/vpinball/*.deb dist/vpinball/*.sha256 --clobber
 
   vpinfe:
     needs: create-release
@@ -185,7 +186,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ needs.create-release.outputs.release_tag }}
-        run: gh release upload "$RELEASE_TAG" dist/vpinfe/*.deb dist/vpinfe/*.sha256 --clobber
+        run: gh release upload "$RELEASE_TAG" -R "$GITHUB_REPOSITORY" dist/vpinfe/*.deb dist/vpinfe/*.sha256 --clobber
 
   vpxconfig:
     needs: create-release
@@ -228,4 +229,4 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ needs.create-release.outputs.release_tag }}
-        run: gh release upload "$RELEASE_TAG" dist/vpxconfig/*.deb dist/vpxconfig/*.sha256 --clobber
+        run: gh release upload "$RELEASE_TAG" -R "$GITHUB_REPOSITORY" dist/vpxconfig/*.deb dist/vpxconfig/*.sha256 --clobber

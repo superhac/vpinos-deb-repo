@@ -11,10 +11,10 @@ on:
         description: Base name for the new GitHub Release created by this run
         required: true
         default: vpinos-debs
-      vpinball_ref:
-        description: Branch, tag, or commit from vpinball/vpinball
+      vpinball_version:
+        description: VPinball (superhac/vpinball) release tag, or latest
         required: true
-        default: master
+        default: latest
       vpinfe_version:
         description: VPinFE release tag, or latest
         required: true
@@ -54,7 +54,7 @@ jobs:
             --title "VPINOS Debian packages ($RELEASE_TAG)" \
             --notes "Debian package assets built by GitHub Actions.
 
-          - vpinball_ref: ${{ inputs.vpinball_ref }}
+          - vpinball_version: ${{ inputs.vpinball_version }}
           - vpinfe_version: ${{ inputs.vpinfe_version }}
           - architectures: amd64, arm64
           - vpxconfig_version: ${{ inputs.vpxconfig_version }}
@@ -65,68 +65,27 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - arch: amd64
-            runner: ubuntu-24.04
-            container: ""
-          - arch: arm64
-            runner: ubuntu-24.04-arm
-            # Built on the runner itself, VPX links Ubuntu's libgpiod, which VPinOS does not have.
-            container: debian:trixie
-    runs-on: ${{ matrix.runner }}
-    container: ${{ matrix.container }}
+        arch: [amd64, arm64]
+    runs-on: ubuntu-24.04
 
     steps:
-      - name: Prepare the container
-        if: matrix.container != ''
-        run: |
-          apt-get update
-          apt-get install -y ca-certificates gh git sudo
-          git config --global --add safe.directory "$GITHUB_WORKSPACE"
-
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Install vpinball build tools
+      - name: Install vpinball packaging tools
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            autoconf \
-            automake \
-            bison \
-            build-essential \
-            cmake \
             curl \
             dpkg-dev \
-            file \
-            git \
-            libasound2-dev \
-            libdrm-dev \
-            libegl-dev \
-            libgbm-dev \
-            libgl1-mesa-dev \
-            libglu1-mesa-dev \
-            libgpiod-dev \
-            libpipewire-0.3-dev \
-            libtool \
-            libudev-dev \
-            libwayland-dev \
-            libwayland-egl-backend-dev \
-            libx11-dev \
-            libxcursor-dev \
-            libxi-dev \
-            libxkbcommon-dev \
-            libxrandr-dev \
-            libxss-dev \
-            libxtst-dev \
-            nasm \
-            pkg-config \
-            zlib1g-dev
+            jq
 
-      - name: Build vpinball .deb
+      - name: Build vpinball .deb from release asset
         env:
-          VPINBALL_REPO_URL: https://github.com/vpinball/vpinball.git
-          VPINBALL_REF: ${{ inputs.vpinball_ref }}
+          GITHUB_TOKEN: ${{ github.token }}
+          VPINBALL_REPO: superhac/vpinball
+          VPINBALL_VERSION: ${{ inputs.vpinball_version }}
+          DEB_ARCH: ${{ matrix.arch }}
           PACKAGE_REVISION: ${{ inputs.package_revision }}
           OUTDIR: ${{ github.workspace }}/dist/vpinball
         run: scripts/build-vpinball-deb.sh

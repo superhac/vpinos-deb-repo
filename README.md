@@ -5,11 +5,12 @@ the `.deb` files as GitHub Release assets.
 
 The current packages are:
 
-- `vpinball`, built from [`vpinball/vpinball`](https://github.com/vpinball/vpinball)
+- `vpinball`, repackaged from [`superhac/vpinball`](https://github.com/superhac/vpinball)
+  release assets
 - `vpinfe`, repackaged from [`superhac/vpinfe`](https://github.com/superhac/vpinfe)
   release assets
 - `vpxconfig`, repackaged from [`superhac/vpxconfig`](https://github.com/superhac/vpxconfig)
-  release assets (amd64 only)
+  release assets
 
 GitHub rejects normal git files larger than 100 MB, while GitHub Release assets
 can be much larger. The workflow therefore uploads `.deb` files to a release
@@ -29,22 +30,21 @@ builds `vpinball`, `vpinfe` and `vpxconfig`.
 
 ## vpinball
 
-The `vpinball` job:
+The `vpinball` job runs once per architecture (amd64, arm64). For each:
 
-1. checks out `https://github.com/vpinball/vpinball.git`,
-2. builds the Linux x64 BGFX standalone player,
+1. reads the selected release from `https://github.com/superhac/vpinball`
+   (`vpinball_version`, default `latest`),
+2. downloads that architecture's Linux BGFX standalone player release asset,
 3. creates a `vpinball` Debian package,
 4. writes it to `dist/`,
 5. generates a `.sha256` checksum sidecar, and
 6. uploads the `.deb` and checksum sidecar to the selected GitHub Release.
 
-The workflow accepts a branch, tag, or commit SHA in `vpinball_ref`.
+`superhac/vpinball` doesn't publish a checksum sidecar for its release assets,
+so the download isn't verified against one (unlike vpinfe and vpxconfig).
 
-The package version is `<base>.<UTC commit date and time>-<revision>`, e.g.
-`10.9.202609191430-1`. The base defaults to `10.9` and can be changed with
-`VPINBALL_BASE_VERSION`. The timestamp is `YYYYMMDDHHMM` from the built commit,
-so versions increase with upstream commits. Bump `package_revision` only to
-repackage the same commit.
+The package version is the upstream release tag, e.g. `10.8.1-5958-bb02f4439-1`.
+Bump `package_revision` to repackage the same upstream release.
 
 ## vpinfe
 
@@ -97,7 +97,7 @@ sha256sum -c vpxconfig_*.deb.sha256
 Build VPinball locally:
 
 ```bash
-sudo apt-get install build-essential cmake git dpkg-dev
+sudo apt-get install curl dpkg-dev jq
 OUTDIR="$PWD/dist" scripts/build-vpinball-deb.sh
 ```
 

@@ -1,65 +1,75 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-repo_url="${VPINBALL_REPO_URL:-https://github.com/vpinball/vpinball.git}"
-ref="${VPINBALL_REF:-master}"
+repo="${VPINBALL_REPO:-superhac/vpinball}"
+version="${VPINBALL_VERSION:-latest}"
 revision="${PACKAGE_REVISION:-1}"
 workdir="${WORKDIR:-$PWD/.build/vpinball}"
 outdir="${OUTDIR:-$PWD/dist}"
 arch="${DEB_ARCH:-$(dpkg --print-architecture)}"
-
-rm -rf "$workdir"
-mkdir -p "$workdir" "$outdir"
-
-git clone --recursive "$repo_url" "$workdir/src"
-cd "$workdir/src"
-git checkout "$ref"
-git submodule update --init --recursive
-
-# Version is <base>.<UTC commit date+time>, e.g. 10.9.202609191430, so versions
-# increase monotonically with upstream master. Bump PACKAGE_REVISION only to
-# repackage the same commit.
-base_version="${VPINBALL_BASE_VERSION:-10.9}"
-commit_stamp="$(TZ=UTC git show -s --format=%cd --date=format-local:%Y%m%d%H%M HEAD)"
-upstream_version="${base_version}.${commit_stamp}"
-package_version="${upstream_version}-${revision}"
 
 depends="libc6, libstdc++6, zlib1g, libdrm2, libgbm1, libglu1-mesa | libglu1, libegl1, libgl1, libwayland-client0, libwayland-egl1, libudev1, libx11-6, libxcursor1, libxi6, libxss1, libxtst6, libxkbcommon0, libxrandr2, libasound2, libpipewire-0.3-0"
 case "$arch" in
   amd64) platform="linux-x64" ;;
   # ZeDMD support links libgpiod on aarch64 only.
   arm64) platform="linux-aarch64"; depends="$depends, libgpiod3" ;;
-  *) echo "No vpinball platform for architecture $arch." >&2; exit 1 ;;
+  *) echo "No vpinball release asset for architecture $arch." >&2; exit 1 ;;
 esac
-"platforms/$platform/external.sh"
-cmake -DCMAKE_BUILD_TYPE=Release -B build
-cmake --build build --parallel "$(nproc)"
+
+command -v curl >/dev/null || { echo "curl is required." >&2; exit 1; }
+command -v jq >/dev/null || { echo "jq is required." >&2; exit 1; }
+
+rm -rf "$workdir"
+mkdir -p "$workdir" "$outdir"
+
+api_base="https://api.github.com/repos/$repo"
+curl_args=(-fsSL)
+if [[ -n "${GITHUB_TOKEN:-}" ]]; then
+  curl_args+=(-H "Authorization: Bearer $GITHUB_TOKEN")
+fi
+
+release_json="$workdir/release.json"
+if [[ "$version" == "latest" ]]; then
+  curl "${curl_args[@]}" "$api_base/releases/latest" > "$release_json"
+  version="$(jq -r '.tag_name' "$release_json")"
+else
+  curl "${curl_args[@]}" "$api_base/releases/tags/$version" > "$release_json"
+fi
+
+upstream_tag="${version#v}"
+asset_name="VPinballX_BGFX-${upstream_tag}-${platform}-Release.tar.gz"
+asset_url="$(jq -r --arg name "$asset_name" '.assets[] | select(.name == $name) | .browser_download_url' "$release_json")"
+if [[ -z "$asset_url" ]]; then
+  echo "Release $version of $repo has no asset named $asset_name." >&2
+  exit 1
+fi
+
+curl "${curl_args[@]}" -o "$workdir/$asset_name" "$asset_url"
+# superhac/vpinball releases don't publish a checksum sidecar to verify
+# the download against, unlike the vpinfe/vpxconfig release assets.
+
+upstream_version="$(printf '%s' "$upstream_tag" | tr '_' '.' | sed -E 's/[^A-Za-z0-9.+:~-]/./g')"
+package_version="${upstream_version}-${revision}"
+
+extract_dir="$workdir/extract"
+mkdir -p "$extract_dir"
+tar -xzf "$workdir/$asset_name" -C "$extract_dir"
+
+if [[ ! -f "$extract_dir/VPinballX_BGFX" ]]; then
+  echo "VPinballX_BGFX not found in $asset_name." >&2
+  exit 1
+fi
 
 pkgroot="$workdir/pkgroot"
 rm -rf "$pkgroot"
 install -d "$pkgroot/DEBIAN" "$pkgroot/opt/vpinball" "$pkgroot/usr/bin" "$pkgroot/usr/share/applications"
 
-# vpinball's Linux build vendors and self-builds all of its third-party libs
-# (SDL3, BGFX, FreeImage, PinMAME, DMDUtil, ffmpeg, ...) as shared objects and
-# copies them, plus assets/scripts/docs and every plugin, flat into the build
-# directory next to the executable (CMAKE_INSTALL_RPATH=$ORIGIN, so the binary
-# only looks for libs beside itself). The whole build/ tree is the app, so the
-# whole thing needs to ship in the package, not just the binary + assets.
-(cd build && tar \
-  --exclude='CMakeFiles' \
-  --exclude='CMakeCache.txt' \
-  --exclude='cmake_install.cmake' \
-  --exclude='Makefile' \
-  --exclude='*.cmake' \
-  --exclude='compile_commands.json' \
-  --exclude='Testing' \
-  --exclude='*.ninja*' \
-  -cf - .) | tar -xf - -C "$pkgroot/opt/vpinball"
-
-if [[ ! -x "$pkgroot/opt/vpinball/VPinballX_BGFX" ]]; then
-  echo "VPinballX_BGFX not found in build output." >&2
-  exit 1
-fi
+# The release tarball is the same flat, vendored-library layout vpinball's own
+# build produces (CMAKE_INSTALL_RPATH=$ORIGIN): the binary, its shared libs,
+# assets/scripts/docs and every plugin all sit flat next to each other. Ship
+# the whole tree, not just the binary.
+cp -a "$extract_dir/." "$pkgroot/opt/vpinball/"
+chmod 0755 "$pkgroot/opt/vpinball/VPinballX_BGFX"
 
 cat > "$pkgroot/usr/bin/vpinball" <<'LAUNCHER'
 #!/usr/bin/env bash
@@ -92,7 +102,7 @@ Priority: optional
 Homepage: https://github.com/vpinball/vpinball
 Description: Visual Pinball X standalone player
  Visual Pinball X is an open source pinball table editor and simulator.
- This package installs the standalone Linux BGFX player build from upstream.
+ This package installs the standalone Linux BGFX player release build.
 CONTROL
 
 deb_path="$outdir/vpinball_${package_version}_${arch}.deb"

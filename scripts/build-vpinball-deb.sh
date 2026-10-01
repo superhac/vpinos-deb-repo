@@ -49,7 +49,11 @@ curl "${curl_args[@]}" -o "$workdir/$asset_name" "$asset_url"
 # the download against, unlike the vpinfe/vpxconfig release assets.
 
 upstream_version="$(printf '%s' "$upstream_tag" | tr '_' '.' | sed -E 's/[^A-Za-z0-9.+:~-]/./g')"
-package_version="${upstream_version}-${revision}"
+# Epoch 1: upstream switched from a fake, always-increasing timestamp version
+# (10.9.<buildtime>) to its real tag (<semver>-<height>-<sha>), which sorts
+# lower to dpkg (e.g. 10.8.1 < 10.9.*). The epoch keeps every future build
+# ordered above every version already published under the old scheme.
+package_version="1:${upstream_version}-${revision}"
 
 extract_dir="$workdir/extract"
 mkdir -p "$extract_dir"
@@ -105,6 +109,9 @@ Description: Visual Pinball X standalone player
  This package installs the standalone Linux BGFX player release build.
 CONTROL
 
-deb_path="$outdir/vpinball_${package_version}_${arch}.deb"
+# Debian convention: percent-encode the epoch's ':' in the filename (it's
+# still the literal ':' in the control file's Version field above).
+file_version="${package_version/:/%3a}"
+deb_path="$outdir/vpinball_${file_version}_${arch}.deb"
 dpkg-deb --build --root-owner-group "$pkgroot" "$deb_path"
 echo "$deb_path"

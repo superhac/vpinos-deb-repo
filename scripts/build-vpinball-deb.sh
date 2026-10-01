@@ -109,9 +109,12 @@ Description: Visual Pinball X standalone player
  This package installs the standalone Linux BGFX player release build.
 CONTROL
 
-# Debian convention: percent-encode the epoch's ':' in the filename (it's
-# still the literal ':' in the control file's Version field above).
-file_version="${package_version/:/%3a}"
+# The filename just needs to be unique per package/arch; apt-ftparchive reads
+# the real Version (with epoch) from the control file above, not from the
+# filename. Drop the epoch here instead of percent-encoding it: GitHub's
+# release-asset upload strips '%' from filenames, which previously left the
+# downloaded .deb unable to match the name recorded in its .sha256 sidecar.
+file_version="${package_version#*:}"
 deb_path="$outdir/vpinball_${file_version}_${arch}.deb"
 dpkg-deb --build --root-owner-group "$pkgroot" "$deb_path"
 echo "$deb_path"
